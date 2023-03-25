@@ -93,7 +93,7 @@ export class UsersService implements OnModuleInit {
       if (correctPassword) {
         const { password, ...result } = user;
 
-        const jwtToken = await this.login(user.userName);
+        const jwtToken = await this.login(user);
         return await this.responseHandlerService.response(
           '',
           HttpStatus.OK,
@@ -118,8 +118,17 @@ export class UsersService implements OnModuleInit {
     }
   }
 
+  async getProfile(user: any) {
+    return await this.responseHandlerService.response(
+      '',
+      HttpStatus.OK,
+      'user profile fetched successfully',
+      user.userName,
+    );
+  }
+
   async login(user: any) {
-    const payload = { username: user.username };
+    const payload = { userName: user.userName };
     return {
       access_token: this.jwtService.sign(payload),
     };
@@ -128,10 +137,6 @@ export class UsersService implements OnModuleInit {
   // findAll() {
   //   return `This action returns all users`;
   // }
-
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
 
   // update(id: number, updateUserDto: UpdateUserDto) {
   //   return `This action updates a #${id} user`;
