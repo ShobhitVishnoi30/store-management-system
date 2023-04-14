@@ -14,6 +14,9 @@ export class Users {
 
   @Column()
   role: Role;
+
+  @Column()
+  revokedTokens: string;
 }
 
 export enum Role {

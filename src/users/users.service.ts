@@ -11,7 +11,6 @@ import { ResponseHandlerService } from 'src/utilities/response-handler.service';
 import { Role, Users } from 'src/users/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { LoginUserDto } from './dto/login-user.dto';
 import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
@@ -21,6 +20,7 @@ export class UsersService implements OnModuleInit {
       userName: 'admin@login',
       password: process.env.ADMIN_PASSWORD,
       role: Role.ADMIN,
+      revokedTokens: '',
     };
 
     const admin = await this.userRepository.findOne({
@@ -45,7 +45,7 @@ export class UsersService implements OnModuleInit {
     private jwtService: JwtService,
   ) {}
 
-  async create(createUserDto: CreateUserDto) {
+  async createUser(createUserDto: CreateUserDto) {
     try {
       if (createUserDto.role == Role.ADMIN) {
         throw new Error('Incorrect role');
@@ -59,6 +59,8 @@ export class UsersService implements OnModuleInit {
       createUserDto.userName = createUserDto.userName.toLowerCase();
 
       let user = this.userRepository.create(createUserDto);
+
+      user.revokedTokens = '';
 
       user = await this.userRepository.save(user);
 
@@ -78,71 +80,93 @@ export class UsersService implements OnModuleInit {
     }
   }
 
-  async loginUser(loginUserDto: LoginUserDto) {
-    const user = await this.userRepository.findOne({
-      where: {
-        userName: loginUserDto.userName,
-      },
-    });
-
-    if (user) {
-      let correctPassword = await bcrypt.compare(
-        loginUserDto.password,
-        user.password,
-      );
-      if (correctPassword) {
-        const { password, ...result } = user;
-
-        const jwtToken = await this.login(user);
-        return await this.responseHandlerService.response(
-          '',
-          HttpStatus.OK,
-          'user logged in successfully',
-          jwtToken,
-        );
-      } else {
-        return await this.responseHandlerService.response(
-          'Incorrect password',
-          HttpStatus.BAD_REQUEST,
-          null,
-          null,
-        );
-      }
-    } else {
+  async getProfile(user: any) {
+    if (user.message) {
       return await this.responseHandlerService.response(
-        `user ${loginUserDto.userName} does not exist`,
-        HttpStatus.BAD_REQUEST,
-        null,
-        null,
+        user.message,
+        HttpStatus.FORBIDDEN,
+        '',
+        '',
       );
     }
-  }
-
-  async getProfile(user: any) {
     return await this.responseHandlerService.response(
       '',
       HttpStatus.OK,
       'user profile fetched successfully',
-      user.userName,
+      user,
     );
   }
 
-  async login(user: any) {
-    const payload = { userName: user.userName };
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
+  async findOne(username: string): Promise<Users | undefined> {
+    const user = await this.userRepository.findOne({
+      where: {
+        userName: username,
+      },
+    });
+
+    return user;
   }
 
-  // findAll() {
-  //   return `This action returns all users`;
-  // }
+  async findById(id: string): Promise<Users | undefined> {
+    return await this.userRepository.findOne({
+      where: {
+        id: id,
+      },
+    });
+  }
 
-  // update(id: number, updateUserDto: UpdateUserDto) {
-  //   return `This action updates a #${id} user`;
-  // }
+  async login(user: any) {
+    const payload = { userId: user.id, username: user.userName };
+    const accessToken = { accessToken: this.jwtService.sign(payload) };
+    return await this.responseHandlerService.response(
+      '',
+      HttpStatus.OK,
+      'user logged in successfully',
+      accessToken,
+    );
+  }
 
-  // remove(id: number) {
-  //   return `This action removes a #${id} user`;
-  // }
+  async updateUser(userData: any, updateUserDto: UpdateUserDto) {
+    if (userData.message) {
+      return await this.responseHandlerService.response(
+        userData.message,
+        HttpStatus.FORBIDDEN,
+        '',
+        '',
+      );
+    }
+    const user = this.findById(userData.userId);
+    const { userName, password } = updateUserDto;
+
+    const updatedUser = Object.assign(user, {
+      userName,
+      password: await bcrypt.hash(password, +process.env.SALT_ROUNDS),
+    });
+
+    await this.userRepository.save(updatedUser);
+  }
+
+  async logOut(userData: any, token: string) {
+    if (userData.message) {
+      return await this.responseHandlerService.response(
+        userData.message,
+        HttpStatus.FORBIDDEN,
+        '',
+        '',
+      );
+    }
+
+    const user = await this.findById(userData.userId);
+
+    user.revokedTokens = token;
+
+    await this.userRepository.save(user);
+
+    return await this.responseHandlerService.response(
+      '',
+      HttpStatus.OK,
+      'user logged out successfully',
+      userData.userName,
+    );
+  }
 }

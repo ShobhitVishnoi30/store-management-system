@@ -12,6 +12,7 @@ import { AuthModule } from './auth/auth.module';
     ConfigModule.forRoot({
       envFilePath: '.env.stage.dev',
       validationSchema: envSchema,
+      isGlobal: true,
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
