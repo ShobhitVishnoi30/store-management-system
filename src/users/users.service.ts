@@ -137,15 +137,43 @@ export class UsersService implements OnModuleInit {
         '',
       );
     }
-    const user = this.findById(userData.userId);
-    const { userName, password } = updateUserDto;
+    try {
+      const user = await this.findById(userData.userId);
+      const { userName, password, phoneNumber } = updateUserDto;
 
-    const updatedUser = Object.assign(user, {
-      userName,
-      password: await bcrypt.hash(password, +process.env.SALT_ROUNDS),
-    });
+      const updatedUser: Users = {
+        ...user,
+        ...(updateUserDto.userName && { userName: updateUserDto.userName }),
+        ...(updateUserDto.password && {
+          password: await bcrypt.hash(
+            updateUserDto.password,
+            +process.env.SALT_ROUNDS,
+          ),
+        }),
+        ...(updateUserDto.phoneNumber && {
+          phoneNumber: updateUserDto.phoneNumber,
+        }),
+      };
+      if (phoneNumber) {
+        updatedUser.verifiedPhoneNumber = false;
+      }
 
-    await this.userRepository.save(updatedUser);
+      await this.userRepository.save(updatedUser);
+
+      return await this.responseHandlerService.response(
+        '',
+        HttpStatus.OK,
+        'user successfully updated',
+        userName,
+      );
+    } catch (error) {
+      return await this.responseHandlerService.response(
+        error.message,
+        HttpStatus.SERVICE_UNAVAILABLE,
+        '',
+        '',
+      );
+    }
   }
 
   async logOut(userData: any, token: string) {
