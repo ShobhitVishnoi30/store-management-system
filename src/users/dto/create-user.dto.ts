@@ -4,6 +4,7 @@ import {
   MinLength,
   MaxLength,
   Matches,
+  IsPhoneNumber,
 } from 'class-validator';
 import { Role } from '../entities/user.entity';
 
@@ -24,5 +25,9 @@ export class CreateUserDto {
   })
   password: string;
 
-  role: Role;
+  @IsNotEmpty()
+  @IsPhoneNumber(null, {
+    message: 'Invalid phone number. Please provide a valid phone number.',
+  })
+  phoneNumber: string;
 }

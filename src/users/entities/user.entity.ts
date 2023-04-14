@@ -13,6 +13,12 @@ export class Users {
   password: string;
 
   @Column()
+  phoneNumber: string;
+
+  @Column()
+  verifiedPhoneNumber: Boolean;
+
+  @Column()
   role: Role;
 
   @Column()

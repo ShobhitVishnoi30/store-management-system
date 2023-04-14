@@ -12,6 +12,7 @@ import { Role, Users } from 'src/users/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
+import { TwilioService } from 'nestjs-twilio';
 
 @Injectable()
 export class UsersService implements OnModuleInit {
@@ -19,6 +20,8 @@ export class UsersService implements OnModuleInit {
     let adminDetails = {
       userName: 'admin@login',
       password: process.env.ADMIN_PASSWORD,
+      phoneNumber: '',
+      verifiedPhoneNumber: false,
       role: Role.ADMIN,
       revokedTokens: '',
     };
@@ -43,14 +46,11 @@ export class UsersService implements OnModuleInit {
     private readonly userRepository: Repository<Users>,
     private readonly responseHandlerService: ResponseHandlerService,
     private jwtService: JwtService,
+    private readonly twilioService: TwilioService,
   ) {}
 
   async createUser(createUserDto: CreateUserDto) {
     try {
-      if (createUserDto.role == Role.ADMIN) {
-        throw new Error('Incorrect role');
-      }
-
       createUserDto.password = await bcrypt.hash(
         createUserDto.password,
         +process.env.SALT_ROUNDS,
@@ -61,6 +61,8 @@ export class UsersService implements OnModuleInit {
       let user = this.userRepository.create(createUserDto);
 
       user.revokedTokens = '';
+      user.verifiedPhoneNumber = false;
+      user.role = Role.USER;
 
       user = await this.userRepository.save(user);
 
@@ -168,5 +170,64 @@ export class UsersService implements OnModuleInit {
       'user logged out successfully',
       userData.userName,
     );
+  }
+
+  async sendOTP(userName: string) {
+    try {
+      const user = await this.findOne(userName);
+      if (user.verifiedPhoneNumber) {
+        throw new Error('already verified');
+      }
+      const otpResponse = await this.twilioService.client.verify
+        .services(process.env.TWILIO_SERVICE_SID)
+        .verifications.create({
+          to: user.phoneNumber,
+          channel: 'sms',
+        });
+      return await this.responseHandlerService.response(
+        '',
+        HttpStatus.OK,
+        'otp sent',
+        user.phoneNumber,
+      );
+    } catch (error) {
+      return await this.responseHandlerService.response(
+        error.message,
+        HttpStatus.SERVICE_UNAVAILABLE,
+        '',
+        '',
+      );
+    }
+  }
+
+  async verifyOTP(userName: string, otp: string) {
+    try {
+      const user = await this.findOne(userName);
+      const verifiedResponse = await this.twilioService.client.verify
+        .services(process.env.TWILIO_SERVICE_SID)
+        .verificationChecks.create({
+          to: user.phoneNumber,
+          code: otp,
+        });
+
+      if (verifiedResponse.valid) {
+        user.verifiedPhoneNumber = true;
+        await this.userRepository.save(user);
+      }
+
+      return await this.responseHandlerService.response(
+        '',
+        HttpStatus.OK,
+        'otp verfied',
+        user.phoneNumber,
+      );
+    } catch (error) {
+      return await this.responseHandlerService.response(
+        'invalid otp',
+        HttpStatus.BAD_REQUEST,
+        '',
+        '',
+      );
+    }
   }
 }

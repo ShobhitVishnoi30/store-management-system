@@ -35,6 +35,16 @@ export class UsersController {
     return this.usersService.login(req.user);
   }
 
+  @Get('send-otp')
+  sendOtp(@Req() req) {
+    return this.usersService.sendOTP(req.body.userName);
+  }
+
+  @Post('verify-otp')
+  verifyOTP(@Req() req) {
+    return this.usersService.verifyOTP(req.body.userName, req.body.otp);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   getProfile(@Request() req) {

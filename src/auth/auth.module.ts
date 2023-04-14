@@ -9,6 +9,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Users } from 'src/users/entities/user.entity';
 import { ResponseHandlerService } from 'src/utilities/response-handler.service';
 import { JwtStrategy } from './jwt.strategy';
+import { TwilioModule } from 'nestjs-twilio';
 
 @Module({
   imports: [
@@ -21,6 +22,10 @@ import { JwtStrategy } from './jwt.strategy';
     JwtModule.register({
       secret: process.env.SECRET,
       signOptions: { expiresIn: '60s' },
+    }),
+    TwilioModule.forRoot({
+      accountSid: process.env.TWILIO_ACCOUNT_SID,
+      authToken: process.env.TWILIO_AUTH_TOKEN,
     }),
     PassportModule,
   ],

@@ -6,6 +6,7 @@ import { envSchema } from './utilities/joi-validation';
 import { InventoryModule } from './inventory/inventory.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { TwilioModule } from 'nestjs-twilio';
 
 @Module({
   imports: [
