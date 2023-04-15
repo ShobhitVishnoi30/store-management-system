@@ -38,13 +38,15 @@ export class UsersController {
 
   @Get('google-auth')
   @UseGuards(AuthGuard('google'))
-  async googleAuth(@Req() req) {}
-
-  @Get('google-auth-redirect')
-  @UseGuards(AuthGuard('google'))
-  googleAuthRedirect(@Req() req) {
+  async googleAuth(@Req() req) {
     return this.usersService.googleLogin(req);
   }
+
+  // @Get('google-auth-redirect')
+  // @UseGuards(AuthGuard('google'))
+  // googleAuthRedirect(@Req() req) {
+  //   return this.usersService.googleLogin(req);
+  // }
 
   @Get('send-otp')
   sendOtp(@Req() req) {

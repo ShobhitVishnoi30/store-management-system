@@ -229,6 +229,9 @@ export class UsersService implements OnModuleInit {
   async sendOTP(userName: string) {
     try {
       const user = await this.findOne(userName);
+      if (!user) {
+        throw new Error('no user found');
+      }
       if (user.verifiedPhoneNumber) {
         throw new Error('already verified');
       }
@@ -262,6 +265,9 @@ export class UsersService implements OnModuleInit {
   async verifyOTP(userName: string, otp: string) {
     try {
       const user = await this.findOne(userName);
+      if (!user) {
+        throw new Error('no user found');
+      }
       const verifiedResponse = await this.twilioService.client.verify.v2
         .services(process.env.TWILIO_SERVICE_SID)
         .verificationChecks.create({
