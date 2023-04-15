@@ -12,6 +12,7 @@ import { ConfigModule } from '@nestjs/config';
 import { envSchema } from 'src/utilities/joi-validation';
 import { TwilioModule } from 'nestjs-twilio';
 import { TwilioService } from 'nestjs-twilio';
+import { GoogleStrategy } from 'src/auth/google.strategy';
 
 @Module({
   imports: [
@@ -31,7 +32,13 @@ import { TwilioService } from 'nestjs-twilio';
     }),
   ],
   controllers: [UsersController],
-  providers: [UsersService, ResponseHandlerService, JwtStrategy, LocalStrategy],
+  providers: [
+    UsersService,
+    ResponseHandlerService,
+    JwtStrategy,
+    LocalStrategy,
+    GoogleStrategy,
+  ],
   exports: [UsersService],
 })
 export class UsersModule {}

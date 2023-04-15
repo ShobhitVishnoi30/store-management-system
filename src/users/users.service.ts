@@ -128,6 +128,32 @@ export class UsersService implements OnModuleInit {
     );
   }
 
+  async googleLogin(req: any) {
+    let user = await this.findOne(req.user.email);
+
+    if (!user) {
+      user = this.userRepository.create({
+        userName: req.user.email,
+        password: '',
+        role: Role.USER,
+        revokedTokens: '',
+        verifiedPhoneNumber: false,
+        phoneNumber: '',
+      });
+
+      await this.userRepository.save(user);
+    }
+
+    const payload = { userId: user.id, username: user.userName };
+    const accessToken = { accessToken: this.jwtService.sign(payload) };
+    return await this.responseHandlerService.response(
+      '',
+      HttpStatus.OK,
+      'user loged in successfully',
+      accessToken,
+    );
+  }
+
   async updateUser(userData: any, updateUserDto: UpdateUserDto) {
     if (userData.message) {
       return await this.responseHandlerService.response(
@@ -206,12 +232,17 @@ export class UsersService implements OnModuleInit {
       if (user.verifiedPhoneNumber) {
         throw new Error('already verified');
       }
-      const otpResponse = await this.twilioService.client.verify
+      if (!user.phoneNumber) {
+        throw new Error('phone number does not exist');
+      }
+
+      const otpResponse = await this.twilioService.client.verify.v2
         .services(process.env.TWILIO_SERVICE_SID)
         .verifications.create({
           to: user.phoneNumber,
           channel: 'sms',
         });
+
       return await this.responseHandlerService.response(
         '',
         HttpStatus.OK,
@@ -231,7 +262,7 @@ export class UsersService implements OnModuleInit {
   async verifyOTP(userName: string, otp: string) {
     try {
       const user = await this.findOne(userName);
-      const verifiedResponse = await this.twilioService.client.verify
+      const verifiedResponse = await this.twilioService.client.verify.v2
         .services(process.env.TWILIO_SERVICE_SID)
         .verificationChecks.create({
           to: user.phoneNumber,
