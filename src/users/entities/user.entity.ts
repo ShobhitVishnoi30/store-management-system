@@ -15,10 +15,10 @@ export class Users {
   @Column()
   phoneNumber: string;
 
-  // @Column({ default: false })
-  // verifiedEmail: Boolean;
+  @Column({ default: false })
+  verifiedEmail: Boolean;
 
-  @Column()
+  @Column({ default: false })
   verifiedPhoneNumber: Boolean;
 
   @Column()

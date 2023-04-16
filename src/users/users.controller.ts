@@ -24,12 +24,13 @@ import { AuthGuard } from '@nestjs/passport';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post('/signup')
+  @Post('signup')
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.createUser(createUserDto);
   }
 
   @UseGuards(LocalAuthGuard)
+  @HttpCode(HttpStatus.OK)
   @Post('login')
   signIn(@Req() req) {
     return this.usersService.login(req.user);
@@ -46,11 +47,6 @@ export class UsersController {
     return this.usersService.googleLogin(req);
   }
 
-  // @Get('verify-email')
-  // verifyEmail(@Req() req) {
-  //   return this.usersService.sendOTPForEmail(req.body.userName);
-  // }
-
   @Get('send-otp')
   sendOtp(@Req() req) {
     return this.usersService.sendOTP(req.body.userName);
@@ -59,6 +55,19 @@ export class UsersController {
   @Post('update-password')
   async updatePassword(@Body() data) {
     return this.usersService.resetPassword(data);
+  }
+
+  @Post('send-verification-email')
+  sendVerificationEmail(@Req() req) {
+    return this.usersService.sendLinkForEmail(req.query.userName);
+  }
+
+  @Post('verify-email')
+  verifyEmail(@Req() req) {
+    return this.usersService.verifyEmail(
+      req.query.userName,
+      req.query.verification,
+    );
   }
 
   @Post('verify-otp')

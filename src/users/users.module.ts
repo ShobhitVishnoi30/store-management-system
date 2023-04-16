@@ -13,10 +13,11 @@ import { envSchema } from 'src/utilities/joi-validation';
 import { TwilioModule } from 'nestjs-twilio';
 import { TwilioService } from 'nestjs-twilio';
 import { GoogleStrategy } from 'src/auth/google.strategy';
+import { Verifications } from './entities/verification.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Users]),
+    TypeOrmModule.forFeature([Users, Verifications]),
     ConfigModule.forRoot({
       envFilePath: '.env.stage.dev',
       validationSchema: envSchema,

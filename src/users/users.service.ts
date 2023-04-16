@@ -14,6 +14,9 @@ import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { TwilioService } from 'nestjs-twilio';
 import { createTransport } from 'nodemailer';
+import { Verifications } from './entities/verification.entity';
+import * as sha256 from 'crypto-js/sha256';
+import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class UsersService implements OnModuleInit {
@@ -45,12 +48,12 @@ export class UsersService implements OnModuleInit {
   constructor(
     @InjectRepository(Users)
     private readonly userRepository: Repository<Users>,
+    @InjectRepository(Verifications)
+    private readonly verificationRepository: Repository<Verifications>,
     private readonly responseHandlerService: ResponseHandlerService,
     private jwtService: JwtService,
     private readonly twilioService: TwilioService,
-  ) {
-    //this.sendOTPForEmail('aa');
-  }
+  ) {}
 
   async createUser(createUserDto: CreateUserDto) {
     try {
@@ -64,7 +67,6 @@ export class UsersService implements OnModuleInit {
       let user = this.userRepository.create(createUserDto);
 
       user.revokedTokens = '';
-      user.verifiedPhoneNumber = false;
       user.role = Role.USER;
 
       user = await this.userRepository.save(user);
@@ -180,6 +182,9 @@ export class UsersService implements OnModuleInit {
       if (phoneNumber) {
         updatedUser.verifiedPhoneNumber = false;
       }
+      if (userName) {
+        updatedUser.verifiedEmail = false;
+      }
 
       await this.userRepository.save(updatedUser);
 
@@ -293,40 +298,115 @@ export class UsersService implements OnModuleInit {
     }
   }
 
-  // async sendOTPForEmail(userName: string) {
-  //   const transporter = createTransport({
-  //     host: 'live.smtp.mailtrap.io',
-  //     port: 587,
-  //     auth: {
-  //       user: 'api', // replace with your Mailtrap credentials
-  //       pass: 'c98f46dcd9a665215b9c7ad7c3996ffc',
-  //     },
-  //     debug: true, // show debug output
-  //     logger: true, // log information in console
-  //   });
-
-  //   const mailOptions = {
-  //     from: 'sv@rapidinnovation.dev',
-  //     to: 'vishnoishobhit201@gmail.com',
-  //     subject: 'Nice Nodemailer test',
-  //     text: 'Hey there, it’s our first message sent with Nodemailer 😉 ',
-  //     html: '<b>Hey there! </b><br> This is our first message sent with Nodemailer',
-  //   };
-
-  //   transporter.sendMail(mailOptions, function (error, info) {
-  //     if (error) {
-  //       console.log(error);
-  //     } else {
-  //       console.log('Email sent: ' + info.response);
-  //     }
-  //   });
-  // }
-
-  async forgotPassword(userName: string) {
-    console.log(userName);
+  async sendLinkForEmail(userName: string) {
     try {
       const user = await this.findOne(userName);
-      console.log(user);
+      if (!user) {
+        throw new Error('No user found');
+      }
+
+      const secret = process.env.VERIFICATION_SECRET;
+      const hashDigest = sha256(user.userName + secret + Date.now());
+      const verificationLink = `http://localhost:3000/users/verify-email?userName=${
+        user.userName
+      }&verification=${hashDigest.toString()}`;
+      const transporter = createTransport({
+        host: 'sandbox.smtp.mailtrap.io',
+        port: 2525,
+        auth: {
+          user: process.env.MAILTRAP_USER,
+          pass: process.env.MAILTRAP_PASSWORD,
+        },
+      });
+
+      const mailOptions = {
+        from: 'vishnoishobhit201@gmail.com',
+        to: user.userName,
+        subject: 'Verify your email',
+        text: 'Hey there, please click on the below link to verify your email ',
+        html: `<p>Please click the following link to verify your email address:</p><p><a href="${verificationLink}">${verificationLink}</a></p>`,
+      };
+
+      await transporter.sendMail(mailOptions);
+
+      let verification = await this.verificationRepository.findOne({
+        where: {
+          userName: user.userName,
+        },
+      });
+
+      if (!verification) {
+        verification = this.verificationRepository.create({
+          userName: user.userName,
+          verificationHash: hashDigest.toString(),
+          expirationTime: (Date.now() + 300).toString(),
+        });
+      } else {
+        verification.verificationHash = hashDigest.toString();
+        verification.expirationTime = (Date.now() + 300).toString();
+      }
+
+      await this.verificationRepository.save(verification);
+      return await this.responseHandlerService.response(
+        '',
+        HttpStatus.OK,
+        'email sent ',
+        user.userName,
+      );
+    } catch (error) {
+      return await this.responseHandlerService.response(
+        error.message,
+        HttpStatus.SERVICE_UNAVAILABLE,
+        '',
+        '',
+      );
+    }
+  }
+
+  async verifyEmail(userName: string, verificationHash: string) {
+    try {
+      const verifications = await this.verificationRepository.findOne({
+        where: {
+          userName,
+        },
+      });
+
+      if (!verifications) {
+        throw new Error('Incorrect details');
+      }
+
+      let todayDate = BigInt(Date.now().toString());
+
+      if (BigInt(verifications.expirationTime) > todayDate) {
+        throw new Error('verification hash has expired');
+      }
+
+      if (verifications.verificationHash == verificationHash) {
+        const user = await this.findOne(userName);
+        user.verifiedEmail = true;
+        await this.userRepository.save(user);
+      }
+
+      return await this.responseHandlerService.response(
+        '',
+        HttpStatus.OK,
+        'email verfied',
+        userName,
+      );
+    } catch (error) {
+      return await this.responseHandlerService.response(
+        error.message,
+        HttpStatus.SERVICE_UNAVAILABLE,
+        '',
+        '',
+      );
+    }
+  }
+
+  async forgotPassword(userName: string) {
+    try {
+      const user = await this.findOne(userName);
+
       if (!user) {
         throw new Error('no user found');
       }

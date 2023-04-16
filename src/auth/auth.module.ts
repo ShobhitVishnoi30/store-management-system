@@ -10,10 +10,11 @@ import { Users } from 'src/users/entities/user.entity';
 import { ResponseHandlerService } from 'src/utilities/response-handler.service';
 import { JwtStrategy } from './jwt.strategy';
 import { TwilioModule } from 'nestjs-twilio';
+import { Verifications } from 'src/users/entities/verification.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Users]),
+    TypeOrmModule.forFeature([Users, Verifications]),
     ConfigModule.forRoot({
       envFilePath: '.env.stage.dev',
       validationSchema: envSchema,
