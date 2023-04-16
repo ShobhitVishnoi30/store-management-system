@@ -95,4 +95,10 @@ export class UsersController {
       req.headers.authorization.split(' ')[1],
     );
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('delete')
+  deleteUser(@Req() req) {
+    return this.usersService.deleteUser(req.user);
+  }
 }

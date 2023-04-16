@@ -204,6 +204,44 @@ export class UsersService implements OnModuleInit {
     }
   }
 
+  async deleteUser(userData: any) {
+    if (userData.message) {
+      return await this.responseHandlerService.response(
+        userData.message,
+        HttpStatus.FORBIDDEN,
+        '',
+        '',
+      );
+    }
+    try {
+      const user = await this.findOne(userData.userName);
+      await this.userRepository.delete(user.id);
+
+      const verifications = await this.verificationRepository.findOne({
+        where: {
+          userName: userData.userName,
+        },
+      });
+
+      if (verifications) {
+        await this.verificationRepository.delete(verifications.id);
+      }
+      return await this.responseHandlerService.response(
+        '',
+        HttpStatus.OK,
+        'user successfully deleted',
+        userData.userName,
+      );
+    } catch (error) {
+      return await this.responseHandlerService.response(
+        error.message,
+        HttpStatus.SERVICE_UNAVAILABLE,
+        '',
+        '',
+      );
+    }
+  }
+
   async logOut(userData: any, token: string) {
     if (userData.message) {
       return await this.responseHandlerService.response(
