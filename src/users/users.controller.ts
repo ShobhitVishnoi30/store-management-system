@@ -30,10 +30,14 @@ export class UsersController {
   }
 
   @UseGuards(LocalAuthGuard)
-  @HttpCode(HttpStatus.OK)
   @Post('login')
   signIn(@Req() req) {
     return this.usersService.login(req.user);
+  }
+
+  @Get('forgot-password')
+  forgotPassword(@Req() req) {
+    return this.usersService.forgotPassword(req.query.userName);
   }
 
   @Get('google-auth')
@@ -42,15 +46,19 @@ export class UsersController {
     return this.usersService.googleLogin(req);
   }
 
-  // @Get('google-auth-redirect')
-  // @UseGuards(AuthGuard('google'))
-  // googleAuthRedirect(@Req() req) {
-  //   return this.usersService.googleLogin(req);
+  // @Get('verify-email')
+  // verifyEmail(@Req() req) {
+  //   return this.usersService.sendOTPForEmail(req.body.userName);
   // }
 
   @Get('send-otp')
   sendOtp(@Req() req) {
     return this.usersService.sendOTP(req.body.userName);
+  }
+
+  @Post('update-password')
+  async updatePassword(@Body() data) {
+    return this.usersService.resetPassword(data);
   }
 
   @Post('verify-otp')

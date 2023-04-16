@@ -13,6 +13,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { TwilioService } from 'nestjs-twilio';
+import { createTransport } from 'nodemailer';
 
 @Injectable()
 export class UsersService implements OnModuleInit {
@@ -47,7 +48,9 @@ export class UsersService implements OnModuleInit {
     private readonly responseHandlerService: ResponseHandlerService,
     private jwtService: JwtService,
     private readonly twilioService: TwilioService,
-  ) {}
+  ) {
+    //this.sendOTPForEmail('aa');
+  }
 
   async createUser(createUserDto: CreateUserDto) {
     try {
@@ -165,17 +168,11 @@ export class UsersService implements OnModuleInit {
     }
     try {
       const user = await this.findById(userData.userId);
-      const { userName, password, phoneNumber } = updateUserDto;
+      const { userName, phoneNumber } = updateUserDto;
 
       const updatedUser: Users = {
         ...user,
         ...(updateUserDto.userName && { userName: updateUserDto.userName }),
-        ...(updateUserDto.password && {
-          password: await bcrypt.hash(
-            updateUserDto.password,
-            +process.env.SALT_ROUNDS,
-          ),
-        }),
         ...(updateUserDto.phoneNumber && {
           phoneNumber: updateUserDto.phoneNumber,
         }),
@@ -283,13 +280,120 @@ export class UsersService implements OnModuleInit {
       return await this.responseHandlerService.response(
         '',
         HttpStatus.OK,
-        'otp verfied',
+        'phone number verfied',
         user.phoneNumber,
       );
     } catch (error) {
       return await this.responseHandlerService.response(
         'invalid otp',
         HttpStatus.BAD_REQUEST,
+        '',
+        '',
+      );
+    }
+  }
+
+  // async sendOTPForEmail(userName: string) {
+  //   const transporter = createTransport({
+  //     host: 'live.smtp.mailtrap.io',
+  //     port: 587,
+  //     auth: {
+  //       user: 'api', // replace with your Mailtrap credentials
+  //       pass: 'c98f46dcd9a665215b9c7ad7c3996ffc',
+  //     },
+  //     debug: true, // show debug output
+  //     logger: true, // log information in console
+  //   });
+
+  //   const mailOptions = {
+  //     from: 'sv@rapidinnovation.dev',
+  //     to: 'vishnoishobhit201@gmail.com',
+  //     subject: 'Nice Nodemailer test',
+  //     text: 'Hey there, it’s our first message sent with Nodemailer 😉 ',
+  //     html: '<b>Hey there! </b><br> This is our first message sent with Nodemailer',
+  //   };
+
+  //   transporter.sendMail(mailOptions, function (error, info) {
+  //     if (error) {
+  //       console.log(error);
+  //     } else {
+  //       console.log('Email sent: ' + info.response);
+  //     }
+  //   });
+  // }
+
+  async forgotPassword(userName: string) {
+    console.log(userName);
+    try {
+      const user = await this.findOne(userName);
+      console.log(user);
+      if (!user) {
+        throw new Error('no user found');
+      }
+      if (!user.verifiedPhoneNumber) {
+        throw new Error('phone number not verified');
+      }
+      if (!user.phoneNumber) {
+        throw new Error('phone number does not exist');
+      }
+
+      const otpResponse = await this.twilioService.client.verify.v2
+        .services(process.env.TWILIO_SERVICE_SID)
+        .verifications.create({
+          to: user.phoneNumber,
+          channel: 'sms',
+        });
+
+      return await this.responseHandlerService.response(
+        '',
+        HttpStatus.OK,
+        'otp sent',
+        user.phoneNumber,
+      );
+    } catch (error) {
+      return await this.responseHandlerService.response(
+        error.message,
+        HttpStatus.SERVICE_UNAVAILABLE,
+        '',
+        '',
+      );
+    }
+  }
+
+  async resetPassword(data: any) {
+    try {
+      if (!data.userName || !data.newPassword || !data.otp) {
+        throw new Error('please provide all the detials');
+      }
+      const user = await this.findOne(data.userName);
+
+      if (!user) {
+        throw new Error('no user found');
+      }
+      const verifiedResponse = await this.twilioService.client.verify.v2
+        .services(process.env.TWILIO_SERVICE_SID)
+        .verificationChecks.create({
+          to: user.phoneNumber,
+          code: data.otp,
+        });
+
+      if (verifiedResponse.valid) {
+        user.password = await bcrypt.hash(
+          data.newPassword,
+          +process.env.SALT_ROUNDS,
+        );
+        await this.userRepository.save(user);
+      }
+      return await this.responseHandlerService.response(
+        '',
+        HttpStatus.OK,
+        'password updated',
+        data.userName,
+      );
+    } catch (error) {
+      return await this.responseHandlerService.response(
+        error.message,
+        HttpStatus.SERVICE_UNAVAILABLE,
         '',
         '',
       );

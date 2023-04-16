@@ -15,6 +15,9 @@ export class Users {
   @Column()
   phoneNumber: string;
 
+  // @Column({ default: false })
+  // verifiedEmail: Boolean;
+
   @Column()
   verifiedPhoneNumber: Boolean;
 
