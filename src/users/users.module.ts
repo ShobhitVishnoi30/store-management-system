@@ -14,6 +14,8 @@ import { TwilioModule } from 'nestjs-twilio';
 import { TwilioService } from 'nestjs-twilio';
 import { GoogleStrategy } from 'src/auth/google.strategy';
 import { Verifications } from './entities/verification.entity';
+import { APP_GUARD } from '@nestjs/core';
+import { RolesGuard } from 'src/auth/roles.guard';
 
 @Module({
   imports: [

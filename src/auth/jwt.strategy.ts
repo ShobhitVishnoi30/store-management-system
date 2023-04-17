@@ -23,7 +23,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       if (user.revokedTokens == currentToken) {
         return { message: 'Token has been revoked' };
       }
-      return { userId: payload.userId, userName: payload.username };
+      return {
+        userId: payload.userId,
+        userName: payload.username,
+        role: user.role,
+      };
     } catch (error) {
       return { message: 'Token has been revoked' };
     }
