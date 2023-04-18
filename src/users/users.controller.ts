@@ -4,14 +4,11 @@ import {
   Post,
   Body,
   Patch,
-  Param,
   Delete,
   UseGuards,
-  Request,
   HttpCode,
   HttpStatus,
   Req,
-  Put,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -19,9 +16,6 @@ import { LocalAuthGuard } from 'src/auth/local-auth.guard';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { Role } from './entities/user.entity';
-import { Roles } from 'src/auth/roles.decorator';
-import { RolesGuard } from 'src/auth/roles.guard';
 
 @Controller('users')
 export class UsersController {
@@ -78,8 +72,6 @@ export class UsersController {
     return this.usersService.verifyOTP(req.body.userName, req.body.otp);
   }
 
-  //@UseGuards(JwtAuthGuard, RolesGuard)
-  // @Roles(Role.ADMIN)
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   getProfile(@Req() req) {

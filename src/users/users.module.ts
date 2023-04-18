@@ -6,16 +6,12 @@ import { Users } from 'src/users/entities/user.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { LocalStrategy } from 'src/auth/local.strategy';
 import { JwtStrategy } from 'src/auth/jwt.strategy';
-import { AuthModule } from 'src/auth/auth.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
 import { envSchema } from 'src/utilities/joi-validation';
 import { TwilioModule } from 'nestjs-twilio';
-import { TwilioService } from 'nestjs-twilio';
 import { GoogleStrategy } from 'src/auth/google.strategy';
 import { Verifications } from './entities/verification.entity';
-import { APP_GUARD } from '@nestjs/core';
-import { RolesGuard } from 'src/auth/roles.guard';
 
 @Module({
   imports: [

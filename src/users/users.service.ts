@@ -1,9 +1,4 @@
-import {
-  HttpStatus,
-  Injectable,
-  NotFoundException,
-  OnModuleInit,
-} from '@nestjs/common';
+import { HttpStatus, Injectable, OnModuleInit } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
@@ -16,7 +11,6 @@ import { TwilioService } from 'nestjs-twilio';
 import { createTransport } from 'nodemailer';
 import { Verifications } from './entities/verification.entity';
 import * as sha256 from 'crypto-js/sha256';
-import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class UsersService implements OnModuleInit {
