@@ -7,6 +7,7 @@ import { InventoryModule } from './inventory/inventory.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { HppMiddleware } from './middleware/hpp.middleware';
+import { customInputValidation } from './middleware/customValidation';
 
 @Module({
   imports: [
@@ -35,6 +36,6 @@ import { HppMiddleware } from './middleware/hpp.middleware';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(HppMiddleware).forRoutes('*');
+    consumer.apply(HppMiddleware, customInputValidation).forRoutes('*');
   }
 }
