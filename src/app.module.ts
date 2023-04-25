@@ -8,6 +8,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { HppMiddleware } from './middleware/hpp.middleware';
 import { customInputValidation } from './middleware/customValidation';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { customInputValidation } from './middleware/customValidation';
       ],
       synchronize: true,
     }),
+    ScheduleModule.forRoot(),
     InventoryModule,
     UsersModule,
     AuthModule,

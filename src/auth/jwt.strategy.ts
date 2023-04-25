@@ -17,9 +17,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(req: Request, payload: any) {
     const currentToken = req.headers['authorization'].split(' ')[1];
     try {
-      const user = await this.usersService.findOne(payload.username);
+      const tokenDetails = await this.usersService.fetchJwt(currentToken);
+      const user = await this.usersService.findOne(tokenDetails.userName);
 
-      if (user.revokedTokens == currentToken) {
+      if (!tokenDetails.status) {
         return { message: 'Token has been revoked' };
       }
       return {

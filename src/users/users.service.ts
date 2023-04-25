@@ -11,6 +11,8 @@ import { TwilioService } from 'nestjs-twilio';
 import { createTransport } from 'nodemailer';
 import { Verifications } from './entities/verification.entity';
 import * as sha256 from 'crypto-js/sha256';
+import { JWTExpiry } from './entities/jwt-expiry.entity';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class UsersService implements OnModuleInit {
@@ -21,7 +23,6 @@ export class UsersService implements OnModuleInit {
       phoneNumber: '',
       verifiedPhoneNumber: false,
       role: Role.ADMIN,
-      revokedTokens: '',
     };
 
     const admin = await this.userRepository.findOne({
@@ -44,6 +45,8 @@ export class UsersService implements OnModuleInit {
     private readonly userRepository: Repository<Users>,
     @InjectRepository(Verifications)
     private readonly verificationRepository: Repository<Verifications>,
+    @InjectRepository(JWTExpiry)
+    private readonly jwtExpiryRepository: Repository<JWTExpiry>,
     private readonly responseHandlerService: ResponseHandlerService,
     private jwtService: JwtService,
     private readonly twilioService: TwilioService,
@@ -60,7 +63,6 @@ export class UsersService implements OnModuleInit {
 
       let user = this.userRepository.create(createUserDto);
 
-      user.revokedTokens = '';
       user.role = Role.USER;
 
       user = await this.userRepository.save(user);
@@ -120,6 +122,14 @@ export class UsersService implements OnModuleInit {
     const payload = { userId: user.id, username: user.userName };
     const accessToken: string = this.jwtService.sign(payload);
 
+    const jwtData = this.jwtExpiryRepository.create({
+      userName: user.userName,
+      jwtToken: accessToken,
+      status: true,
+    });
+
+    await this.jwtExpiryRepository.save(jwtData);
+
     return await this.responseHandlerService.response(
       '',
       HttpStatus.OK,
@@ -136,7 +146,6 @@ export class UsersService implements OnModuleInit {
         userName: req.user.email,
         password: '',
         role: Role.USER,
-        revokedTokens: '',
         verifiedPhoneNumber: false,
         phoneNumber: '',
       });
@@ -145,7 +154,15 @@ export class UsersService implements OnModuleInit {
     }
 
     const payload = { userId: user.id, username: user.userName };
-    const accessToken = { accessToken: this.jwtService.sign(payload) };
+    const accessToken = this.jwtService.sign(payload);
+
+    const jwtData = this.jwtExpiryRepository.create({
+      userName: req.user.email,
+      jwtToken: accessToken,
+      status: true,
+    });
+
+    await this.jwtExpiryRepository.save(jwtData);
     return await this.responseHandlerService.response(
       '',
       HttpStatus.OK,
@@ -221,6 +238,14 @@ export class UsersService implements OnModuleInit {
       if (verifications) {
         await this.verificationRepository.delete(verifications.id);
       }
+
+      await this.jwtExpiryRepository
+        .createQueryBuilder()
+        .delete()
+        .from(JWTExpiry)
+        .where('userName = :userId', { userId: userData.userName })
+        .execute();
+
       return await this.responseHandlerService.response(
         '',
         HttpStatus.OK,
@@ -247,11 +272,15 @@ export class UsersService implements OnModuleInit {
       );
     }
 
-    const user = await this.findById(userData.userId);
+    let jwtExpiryData = await this.jwtExpiryRepository.findOne({
+      where: {
+        jwtToken: token,
+      },
+    });
 
-    user.revokedTokens = token;
+    jwtExpiryData.status = false;
 
-    await this.userRepository.save(user);
+    await this.jwtExpiryRepository.save(jwtExpiryData);
 
     return await this.responseHandlerService.response(
       '',
@@ -511,5 +540,22 @@ export class UsersService implements OnModuleInit {
         '',
       );
     }
+  }
+
+  async fetchJwt(jwt: string) {
+    return await this.jwtExpiryRepository.findOne({
+      where: {
+        jwtToken: jwt,
+      },
+    });
+  }
+
+  @Cron('59 * * * * *')
+  async handleCron() {
+    await this.jwtExpiryRepository
+      .createQueryBuilder()
+      .delete()
+      .from(JWTExpiry)
+      .execute();
   }
 }
