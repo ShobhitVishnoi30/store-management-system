@@ -118,7 +118,8 @@ export class UsersService implements OnModuleInit {
 
   async login(user: any) {
     const payload = { userId: user.id, username: user.userName };
-    const accessToken = { accessToken: this.jwtService.sign(payload) };
+    const accessToken: string = this.jwtService.sign(payload);
+
     return await this.responseHandlerService.response(
       '',
       HttpStatus.OK,

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import * as path from 'path';
@@ -6,7 +6,8 @@ import { envSchema } from './utilities/joi-validation';
 import { InventoryModule } from './inventory/inventory.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
-import { TwilioModule } from 'nestjs-twilio';
+import { HppMiddleware } from './middleware/hpp.middleware';
+import { customInputValidation } from './middleware/customValidation';
 
 @Module({
   imports: [
@@ -33,4 +34,8 @@ import { TwilioModule } from 'nestjs-twilio';
     AuthModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(HppMiddleware, customInputValidation).forRoutes('*');
+  }
+}
