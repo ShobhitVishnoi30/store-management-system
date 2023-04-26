@@ -14,4 +14,7 @@ export class JWTExpiry {
 
   @Column()
   status: boolean;
+
+  @Column()
+  createdAt: string;
 }

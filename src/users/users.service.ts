@@ -13,6 +13,7 @@ import { Verifications } from './entities/verification.entity';
 import * as sha256 from 'crypto-js/sha256';
 import { JWTExpiry } from './entities/jwt-expiry.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { addDays, addMinutes } from 'date-fns';
 
 @Injectable()
 export class UsersService implements OnModuleInit {
@@ -126,6 +127,7 @@ export class UsersService implements OnModuleInit {
       userName: user.userName,
       jwtToken: accessToken,
       status: true,
+      createdAt: Date.now().toString(),
     });
 
     await this.jwtExpiryRepository.save(jwtData);
@@ -160,6 +162,7 @@ export class UsersService implements OnModuleInit {
       userName: req.user.email,
       jwtToken: accessToken,
       status: true,
+      createdAt: Date.now().toString(),
     });
 
     await this.jwtExpiryRepository.save(jwtData);
@@ -552,10 +555,14 @@ export class UsersService implements OnModuleInit {
 
   @Cron('59 * * * * *')
   async handleCron() {
+    const fiveMinutesAgo = addMinutes(new Date(), -5);
+
     await this.jwtExpiryRepository
       .createQueryBuilder()
       .delete()
       .from(JWTExpiry)
+      .where('status = :status', { status: false })
+      .orWhere('createdAt <= :fiveMinutesAgo', { fiveMinutesAgo })
       .execute();
   }
 }
