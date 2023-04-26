@@ -8,13 +8,13 @@ import { UsersModule } from 'src/users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Users } from 'src/users/entities/user.entity';
 import { ResponseHandlerService } from 'src/utilities/response-handler.service';
-import { JwtStrategy } from './jwt.strategy';
 import { TwilioModule } from 'nestjs-twilio';
 import { Verifications } from 'src/users/entities/verification.entity';
+import { JWTExpiry } from 'src/users/entities/jwt-expiry.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Users, Verifications]),
+    TypeOrmModule.forFeature([Users, Verifications, JWTExpiry]),
     ConfigModule.forRoot({
       envFilePath: '.env.stage.dev',
       validationSchema: envSchema,

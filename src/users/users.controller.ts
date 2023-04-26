@@ -73,6 +73,15 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  logOut(@Req() req) {
+    return this.usersService.logOut(
+      req.user,
+      req.headers.authorization.split(' ')[1],
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('profile')
   getProfile(@Req() req) {
     return this.usersService.getProfile(req.user);
@@ -82,15 +91,6 @@ export class UsersController {
   @Patch()
   async updateUser(@Req() req, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.updateUser(req.user, updateUserDto);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('logout')
-  logOut(@Req() req) {
-    return this.usersService.logOut(
-      req.user,
-      req.headers.authorization.split(' ')[1],
-    );
   }
 
   @UseGuards(JwtAuthGuard)

@@ -13,10 +13,11 @@ import { JwtModule } from '@nestjs/jwt';
 import { TwilioModule } from 'nestjs-twilio';
 import { Users } from 'src/users/entities/user.entity';
 import { Verifications } from 'src/users/entities/verification.entity';
+import { JWTExpiry } from 'src/users/entities/jwt-expiry.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Users, Verifications, Inventory]),
+    TypeOrmModule.forFeature([Users, Verifications, Inventory, JWTExpiry]),
     ConfigModule.forRoot({
       envFilePath: '.env.stage.dev',
       validationSchema: envSchema,
