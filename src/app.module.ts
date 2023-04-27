@@ -6,9 +6,10 @@ import { envSchema } from './utilities/joi-validation';
 import { InventoryModule } from './inventory/inventory.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
-import { HppMiddleware } from './middleware/hpp.middleware';
 import { customInputValidation } from './middleware/customValidation';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -31,13 +32,23 @@ import { ScheduleModule } from '@nestjs/schedule';
       synchronize: true,
     }),
     ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot({
+      ttl: Number(process.env.TTL),
+      limit: Number(process.env.LIMIT),
+    }),
     InventoryModule,
     UsersModule,
     AuthModule,
   ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(HppMiddleware, customInputValidation).forRoutes('*');
+    consumer.apply(customInputValidation).forRoutes('*');
   }
 }
