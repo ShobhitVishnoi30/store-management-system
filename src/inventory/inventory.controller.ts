@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { InventoryDto } from 'src/inventory/dto/create-inventory.dto';
@@ -19,6 +20,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { Roles } from 'src/auth/roles.decorator';
 import { Role } from 'src/users/entities/user.entity';
+import { CartItemDto } from './dto/cart-item.dto';
 
 @Controller('inventory')
 export class InventoryController {
@@ -70,5 +72,17 @@ export class InventoryController {
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<ApiResponse> {
     return await this.inventoryService.deleteInventory(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('/addToCart')
+  async addToCart(@Req() req, @Body() cartItemDto: CartItemDto) {
+    return await this.inventoryService.addToCart(req.user, cartItemDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('/buy/:id')
+  async buyItems(@Req() req, @Param('id', ParseUUIDPipe) id: string) {
+    return await this.inventoryService.buyItems(req.user, id);
   }
 }

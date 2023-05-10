@@ -14,10 +14,19 @@ import { TwilioModule } from 'nestjs-twilio';
 import { Users } from 'src/users/entities/user.entity';
 import { Verifications } from 'src/users/entities/verification.entity';
 import { JWTExpiry } from 'src/users/entities/jwt-expiry.entity';
+import { Cart } from './entity/cart.entity';
+import { CartItem } from './entity/cart-item.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Users, Verifications, Inventory, JWTExpiry]),
+    TypeOrmModule.forFeature([
+      Users,
+      Verifications,
+      Inventory,
+      JWTExpiry,
+      Cart,
+      CartItem,
+    ]),
     ConfigModule.forRoot({
       envFilePath: '.env.stage.dev',
       validationSchema: envSchema,

@@ -10,12 +10,19 @@ import { Inventory } from 'src/inventory/entity/inventory.entity';
 import { ApiResponse } from 'src/interfaces/api-response.interface';
 import { ResponseHandlerService } from 'src/utilities/response-handler.service';
 import { LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
+import { CartItemDto } from './dto/cart-item.dto';
+import { Cart } from './entity/cart.entity';
+import { CartItem } from './entity/cart-item.entity';
 
 @Injectable()
 export class InventoryService {
   constructor(
     @InjectRepository(Inventory)
     private readonly inventoryRepository: Repository<Inventory>,
+    @InjectRepository(Cart)
+    private readonly cartRepository: Repository<Cart>,
+    @InjectRepository(CartItem)
+    private readonly cartItemRepository: Repository<CartItem>,
     private readonly responseHandlerService: ResponseHandlerService,
   ) {}
 
@@ -202,6 +209,110 @@ export class InventoryService {
         HttpStatus.NO_CONTENT,
         'No product found in the inventory',
         inventory,
+      );
+    }
+  }
+
+  async addToCart(user: any, cartItemDto: CartItemDto) {
+    try {
+      let cart = await this.cartRepository.findOne({
+        where: {
+          userId: user.userId,
+        },
+      });
+
+      if (!cart) {
+        cart = this.cartRepository.create();
+        cart.createdDate = Date.now().toString();
+      }
+
+      let itemDetials = await this.inventoryRepository.findOne({
+        where: {
+          id: cartItemDto.itemId,
+        },
+      });
+
+      cart.userId = user.userId;
+
+      let cartItem = this.cartItemRepository.create();
+      cartItem.cart = cart;
+      cartItem.itemId = cartItemDto.itemId;
+      cartItem.quantity = cartItemDto.quantity;
+      cartItem.price = itemDetials.price;
+
+      if (!cart.cartItems) {
+        cart.cartItems = [cartItem];
+      } else {
+        const existingCartItem = cart.cartItems.find(
+          (item) => item.itemId.toLowerCase() === cartItem.itemId.toLowerCase(),
+        );
+
+        if (existingCartItem) {
+          existingCartItem.quantity += cartItemDto.quantity;
+        } else {
+          cart.cartItems.push(cartItem);
+        }
+      }
+
+      cart.modifiedDate = Date.now().toString();
+
+      let totalCost = Number(cartItemDto.quantity) * Number(itemDetials.price);
+      if (!cart.totalPrice) {
+        cart.totalPrice = totalCost;
+      } else {
+        cart.totalPrice = Number(cart.totalPrice) + totalCost;
+      }
+
+      console.log('261');
+
+      console.log(cart);
+
+      await this.cartRepository.save(cart);
+      return await this.responseHandlerService.response(
+        null,
+        HttpStatus.OK,
+        'Cart Updated',
+        cart.id,
+      );
+    } catch (error) {
+      return await this.responseHandlerService.response(
+        error.message,
+        HttpStatus.BAD_REQUEST,
+        'Something went wrong',
+        '',
+      );
+    }
+  }
+
+  async buyItems(user: any, id: string) {
+    try {
+      let cart = await this.cartRepository.findOne({
+        where: {
+          id,
+        },
+      });
+
+      if (!cart) {
+        throw new Error('cart not found');
+      }
+      if (cart.bought) {
+        throw new Error('already bought');
+      }
+
+      cart.bought = true;
+      await this.cartRepository.save(cart);
+      return await this.responseHandlerService.response(
+        null,
+        HttpStatus.OK,
+        'succesfully purchased',
+        cart.id,
+      );
+    } catch (error) {
+      return await this.responseHandlerService.response(
+        error.message,
+        HttpStatus.BAD_REQUEST,
+        'invalid cart id',
+        '',
       );
     }
   }

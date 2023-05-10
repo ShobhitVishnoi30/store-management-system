@@ -555,7 +555,7 @@ export class UsersService implements OnModuleInit {
 
   @Cron('59 * * * * *')
   async handleCron() {
-    const fiveMinutesAgo = addMinutes(new Date(), -5);
+    const fiveMinutesAgo = addMinutes(new Date(), -5).getTime();
 
     await this.jwtExpiryRepository
       .createQueryBuilder()
