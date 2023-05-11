@@ -13,6 +13,7 @@ import { LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import { CartItemDto } from './dto/cart-item.dto';
 import { Cart } from './entity/cart.entity';
 import { CartItem } from './entity/cart-item.entity';
+import { UpdateCartItemDto } from './dto/update-cart.dto';
 
 @Injectable()
 export class InventoryService {
@@ -263,15 +264,78 @@ export class InventoryService {
         cart.totalPrice = Number(cart.totalPrice) + totalCost;
       }
 
-      console.log('261');
-
-      console.log(cart);
-
       await this.cartRepository.save(cart);
       return await this.responseHandlerService.response(
         null,
         HttpStatus.OK,
         'Cart Updated',
+        cart.id,
+      );
+    } catch (error) {
+      return await this.responseHandlerService.response(
+        error.message,
+        HttpStatus.BAD_REQUEST,
+        'Something went wrong',
+        '',
+      );
+    }
+  }
+
+  async removeItemFromCart(user: any, updatedCartItem: UpdateCartItemDto) {
+    try {
+      console.log(updatedCartItem);
+      let cart = await this.cartRepository.findOne({
+        where: {
+          userId: user.userId,
+        },
+      });
+      if (!cart) {
+        throw new Error('No cart for this user');
+      }
+      let itemDetails = await this.inventoryRepository.findOne({
+        where: {
+          id: updatedCartItem.itemId,
+        },
+      });
+      console.log('300');
+      const existingCartItem = cart.cartItems.find(
+        (item) =>
+          item.itemId.toLowerCase() === updatedCartItem.itemId.toLowerCase(),
+      );
+
+      if (existingCartItem) {
+        if (existingCartItem.quantity >= updatedCartItem.quantity) {
+          existingCartItem.quantity -= updatedCartItem.quantity;
+          if (existingCartItem.quantity == 0) {
+            //Need to discuss
+            cart.cartItems = cart.cartItems.filter(
+              (cartItem) => cartItem.id !== existingCartItem.id,
+            );
+          }
+        } else {
+          throw new Error('less number of items');
+        }
+      } else {
+        throw new Error('No such item on this cart');
+      }
+
+      cart.modifiedDate = Date.now().toString();
+
+      let totalCost =
+        Number(updatedCartItem.quantity) * Number(itemDetails.price);
+
+      cart.totalPrice = Number(cart.totalPrice) - totalCost;
+
+      if (cart.cartItems.length == 0) {
+        await this.cartRepository.delete(cart);
+      } else {
+        await this.cartRepository.save(cart);
+      }
+
+      return await this.responseHandlerService.response(
+        null,
+        HttpStatus.OK,
+        'cart updated successfully',
         cart.id,
       );
     } catch (error) {

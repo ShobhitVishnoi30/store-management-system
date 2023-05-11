@@ -21,6 +21,7 @@ import { RolesGuard } from 'src/auth/roles.guard';
 import { Roles } from 'src/auth/roles.decorator';
 import { Role } from 'src/users/entities/user.entity';
 import { CartItemDto } from './dto/cart-item.dto';
+import { UpdateCartItemDto } from './dto/update-cart.dto';
 
 @Controller('inventory')
 export class InventoryController {
@@ -78,6 +79,15 @@ export class InventoryController {
   @Post('/addToCart')
   async addToCart(@Req() req, @Body() cartItemDto: CartItemDto) {
     return await this.inventoryService.addToCart(req.user, cartItemDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('/removeFromCart')
+  async removeFromCart(@Req() req, @Body() updatedCartItem: UpdateCartItemDto) {
+    return await this.inventoryService.removeItemFromCart(
+      req.user,
+      updatedCartItem,
+    );
   }
 
   @UseGuards(JwtAuthGuard)
