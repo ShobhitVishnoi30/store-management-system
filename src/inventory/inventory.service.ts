@@ -379,4 +379,47 @@ export class InventoryService {
       );
     }
   }
+
+  async getCartItems(user: any, id: string) {
+    try {
+      let cart = await this.cartRepository.findOne({
+        where: {
+          id,
+        },
+      });
+
+      if (!cart) {
+        throw new Error('cart not found');
+      }
+
+      if (user.userId !== cart.userId) {
+        throw new Error('invalid cart');
+      }
+
+      let response = {
+        totalPrice: cart.totalPrice,
+        bought: cart.bought,
+        modifiedDate: cart.modifiedDate,
+        cartItems: [],
+      };
+
+      for (let i = 0; i < cart.cartItems.length; i++) {
+        response.cartItems.push(cart.cartItems[i]);
+      }
+
+      return await this.responseHandlerService.response(
+        null,
+        HttpStatus.OK,
+        'cart ',
+        response,
+      );
+    } catch (error) {
+      return await this.responseHandlerService.response(
+        error.message,
+        HttpStatus.BAD_REQUEST,
+        'invalid cart id',
+        '',
+      );
+    }
+  }
 }

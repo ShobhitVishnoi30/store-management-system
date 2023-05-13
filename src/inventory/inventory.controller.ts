@@ -76,6 +76,12 @@ export class InventoryController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('/getCart/:id')
+  async getCart(@Req() req, @Param('id', ParseUUIDPipe) id: string) {
+    return await this.inventoryService.getCartItems(req.user, id);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post('/addToCart')
   async addToCart(@Req() req, @Body() cartItemDto: CartItemDto) {
     return await this.inventoryService.addToCart(req.user, cartItemDto);
