@@ -17,8 +17,10 @@ The Store Management System is a web-based application designed to help store ow
 
 ## Features
 
+- User and Admin login
 - Add, edit and delete products
 - Track sales and inventory levels
+- Buy products
 - User-friendly interface
 
 ## Installation
@@ -29,7 +31,6 @@ The Store Management System is a web-based application designed to help store ow
 git clone https://github.com/your-username/store-management-system.git
 
 ```
-
 
 2. Install the required dependencies:
 
