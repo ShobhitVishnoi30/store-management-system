@@ -12,7 +12,9 @@ export class CartItem {
   @PrimaryGeneratedColumn()
   id: string;
 
-  @ManyToOne(() => Cart, (cart) => cart.cartItems)
+  @ManyToOne(() => Cart, (cart) => cart.cartItems, {
+    onDelete: 'CASCADE',
+  })
   cart: Cart;
 
   @Column()

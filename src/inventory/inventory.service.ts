@@ -283,7 +283,6 @@ export class InventoryService {
 
   async removeItemFromCart(user: any, updatedCartItem: UpdateCartItemDto) {
     try {
-      console.log(updatedCartItem);
       let cart = await this.cartRepository.findOne({
         where: {
           userId: user.userId,
@@ -297,7 +296,7 @@ export class InventoryService {
           id: updatedCartItem.itemId,
         },
       });
-      console.log('300');
+
       const existingCartItem = cart.cartItems.find(
         (item) =>
           item.itemId.toLowerCase() === updatedCartItem.itemId.toLowerCase(),
@@ -307,10 +306,10 @@ export class InventoryService {
         if (existingCartItem.quantity >= updatedCartItem.quantity) {
           existingCartItem.quantity -= updatedCartItem.quantity;
           if (existingCartItem.quantity == 0) {
-            //Need to discuss
             cart.cartItems = cart.cartItems.filter(
               (cartItem) => cartItem.id !== existingCartItem.id,
             );
+            await this.cartItemRepository.delete(existingCartItem.id);
           }
         } else {
           throw new Error('less number of items');
@@ -327,7 +326,7 @@ export class InventoryService {
       cart.totalPrice = Number(cart.totalPrice) - totalCost;
 
       if (cart.cartItems.length == 0) {
-        await this.cartRepository.delete(cart);
+        await this.cartRepository.remove(cart);
       } else {
         await this.cartRepository.save(cart);
       }
