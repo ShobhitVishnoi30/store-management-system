@@ -12,8 +12,8 @@ import { createTransport } from 'nodemailer';
 import { Verifications } from './entities/verification.entity';
 import * as sha256 from 'crypto-js/sha256';
 import { JWTExpiry } from './entities/jwt-expiry.entity';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { addDays, addMinutes } from 'date-fns';
+import { Cron } from '@nestjs/schedule';
+import { addMinutes } from 'date-fns';
 
 @Injectable()
 export class UsersService implements OnModuleInit {

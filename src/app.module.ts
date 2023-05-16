@@ -38,7 +38,6 @@ import { APP_GUARD } from '@nestjs/core';
     }),
     InventoryModule,
     UsersModule,
-    AuthModule,
   ],
   providers: [
     {

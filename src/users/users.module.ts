@@ -4,18 +4,17 @@ import { UsersController } from './users.controller';
 import { ResponseHandlerService } from 'src/utilities/response-handler.service';
 import { Users } from 'src/users/entities/user.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { LocalStrategy } from 'src/auth/local.strategy';
-import { JwtStrategy } from 'src/auth/jwt.strategy';
-import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
 import { envSchema } from 'src/utilities/joi-validation';
 import { TwilioModule } from 'nestjs-twilio';
-import { GoogleStrategy } from 'src/auth/google.strategy';
 import { Verifications } from './entities/verification.entity';
 import { JWTExpiry } from './entities/jwt-expiry.entity';
+import { AuthModule } from 'src/auth/auth.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
+    // AuthModule,
     TypeOrmModule.forFeature([Users, Verifications, JWTExpiry]),
     ConfigModule.forRoot({
       envFilePath: '.env.stage.dev',
@@ -32,13 +31,7 @@ import { JWTExpiry } from './entities/jwt-expiry.entity';
     }),
   ],
   controllers: [UsersController],
-  providers: [
-    UsersService,
-    ResponseHandlerService,
-    JwtStrategy,
-    LocalStrategy,
-    GoogleStrategy,
-  ],
+  providers: [UsersService, ResponseHandlerService],
   exports: [UsersService],
 })
 export class UsersModule {}
