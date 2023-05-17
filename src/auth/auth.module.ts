@@ -19,17 +19,8 @@ import { GoogleStrategy } from './strategies/google.strategy';
       validationSchema: envSchema,
       isGlobal: true,
     }),
-    JwtModule.register({
-      secret: process.env.SECRET,
-      signOptions: { expiresIn: '60s' },
-    }),
     TypeOrmModule.forFeature([Users, JWTExpiry]),
   ],
-  providers: [
-    ResponseHandlerService,
-    JwtStrategy,
-    LocalStrategy,
-    GoogleStrategy,
-  ],
+  providers: [JwtStrategy, LocalStrategy, GoogleStrategy],
 })
 export class AuthModule {}

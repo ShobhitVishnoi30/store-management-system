@@ -14,6 +14,7 @@ import * as sha256 from 'crypto-js/sha256';
 import { JWTExpiry } from './entities/jwt-expiry.entity';
 import { Cron } from '@nestjs/schedule';
 import { addMinutes } from 'date-fns';
+import { Cart } from 'src/inventory/entity/cart.entity';
 
 @Injectable()
 export class UsersService implements OnModuleInit {
@@ -48,6 +49,8 @@ export class UsersService implements OnModuleInit {
     private readonly verificationRepository: Repository<Verifications>,
     @InjectRepository(JWTExpiry)
     private readonly jwtExpiryRepository: Repository<JWTExpiry>,
+    @InjectRepository(Cart)
+    private readonly cartRepository: Repository<Cart>,
     private readonly responseHandlerService: ResponseHandlerService,
     private jwtService: JwtService,
     private readonly twilioService: TwilioService,
@@ -248,6 +251,16 @@ export class UsersService implements OnModuleInit {
         .from(JWTExpiry)
         .where('userName = :userId', { userId: userData.userName })
         .execute();
+
+      let cart = await this.cartRepository.findOne({
+        where: {
+          userId: user.id,
+        },
+      });
+
+      if (cart) {
+        await this.cartRepository.remove(cart);
+      }
 
       return await this.responseHandlerService.response(
         '',

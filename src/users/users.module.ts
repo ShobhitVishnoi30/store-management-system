@@ -11,11 +11,12 @@ import { Verifications } from './entities/verification.entity';
 import { JWTExpiry } from './entities/jwt-expiry.entity';
 import { AuthModule } from 'src/auth/auth.module';
 import { JwtModule } from '@nestjs/jwt';
+import { Cart } from 'src/inventory/entity/cart.entity';
 
 @Module({
   imports: [
-    // AuthModule,
-    TypeOrmModule.forFeature([Users, Verifications, JWTExpiry]),
+    AuthModule,
+    TypeOrmModule.forFeature([Users, Verifications, JWTExpiry, Cart]),
     ConfigModule.forRoot({
       envFilePath: '.env.stage.dev',
       validationSchema: envSchema,
@@ -23,7 +24,7 @@ import { JwtModule } from '@nestjs/jwt';
     }),
     JwtModule.register({
       secret: process.env.SECRET,
-      signOptions: { expiresIn: '60s' },
+      signOptions: { expiresIn: '600s' },
     }),
     TwilioModule.forRoot({
       accountSid: process.env.TWILIO_ACCOUNT_SID,

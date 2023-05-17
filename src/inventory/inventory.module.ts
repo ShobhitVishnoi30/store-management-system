@@ -7,9 +7,11 @@ import { InventoryService } from './inventory.service';
 import { Verifications } from 'src/users/entities/verification.entity';
 import { Cart } from './entity/cart.entity';
 import { CartItem } from './entity/cart-item.entity';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   imports: [
+    AuthModule,
     TypeOrmModule.forFeature([Verifications, Inventory, Cart, CartItem]),
   ],
   providers: [InventoryService, ResponseHandlerService],

@@ -23,7 +23,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(req: Request, payload: any) {
-    console.log('26');
     const currentToken = req.headers['authorization'].split(' ')[1];
     try {
       const tokenDetails = await this.jwtExpiryRepository.findOne({
