@@ -15,6 +15,7 @@ import { JWTExpiry } from './entities/jwt-expiry.entity';
 import { Cron } from '@nestjs/schedule';
 import { addMinutes } from 'date-fns';
 import { Cart } from 'src/inventory/entity/cart.entity';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 
 @Injectable()
 export class UsersService implements OnModuleInit {
@@ -58,6 +59,16 @@ export class UsersService implements OnModuleInit {
 
   async createUser(createUserDto: CreateUserDto) {
     try {
+      let user = await this.userRepository.findOne({
+        where: {
+          userName: createUserDto.userName,
+        },
+      });
+
+      if (user) {
+        throw new Error('user exist with this userName');
+      }
+
       createUserDto.password = await bcrypt.hash(
         createUserDto.password,
         +process.env.SALT_ROUNDS,
@@ -65,7 +76,7 @@ export class UsersService implements OnModuleInit {
 
       createUserDto.userName = createUserDto.userName.toLowerCase();
 
-      let user = this.userRepository.create(createUserDto);
+      user = this.userRepository.create(createUserDto);
 
       user.role = Role.USER;
 
@@ -358,6 +369,8 @@ export class UsersService implements OnModuleInit {
       if (verifiedResponse.valid) {
         user.verifiedPhoneNumber = true;
         await this.userRepository.save(user);
+      } else {
+        throw new Error('OTP not valid');
       }
 
       return await this.responseHandlerService.response(
@@ -518,29 +531,34 @@ export class UsersService implements OnModuleInit {
     }
   }
 
-  async resetPassword(data: any) {
+  async resetPassword(data: ForgotPasswordDto) {
     try {
-      if (!data.userName || !data.newPassword || !data.otp) {
-        throw new Error('please provide all the detials');
+      if (!(data.password === data.passwordConfirm)) {
+        throw new Error('Password does not match');
       }
       const user = await this.findOne(data.userName);
 
       if (!user) {
         throw new Error('no user found');
       }
+
       const verifiedResponse = await this.twilioService.client.verify.v2
         .services(process.env.TWILIO_SERVICE_SID)
         .verificationChecks.create({
           to: user.phoneNumber,
-          code: data.otp,
+          code: data.OTP.toString(),
         });
+
+      console.log(verifiedResponse);
 
       if (verifiedResponse.valid) {
         user.password = await bcrypt.hash(
-          data.newPassword,
+          data.password,
           +process.env.SALT_ROUNDS,
         );
         await this.userRepository.save(user);
+      } else {
+        throw new Error('OTP not valid');
       }
       return await this.responseHandlerService.response(
         '',

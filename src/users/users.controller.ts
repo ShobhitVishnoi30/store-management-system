@@ -16,6 +16,7 @@ import { LocalAuthGuard } from 'src/auth/guards/local-auth.guard';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 
 @Controller('users')
 export class UsersController {
@@ -50,8 +51,8 @@ export class UsersController {
   }
 
   @Post('update-password')
-  async updatePassword(@Body() data) {
-    return this.usersService.resetPassword(data);
+  async updatePassword(@Body() forgotPassword: ForgotPasswordDto) {
+    return this.usersService.resetPassword(forgotPassword);
   }
 
   @Post('send-verification-email')
