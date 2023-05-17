@@ -1,11 +1,19 @@
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
-import { UsersService } from 'src/users/users.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Users } from 'src/users/entities/user.entity';
+import { Repository } from 'typeorm';
+import { JWTExpiry } from 'src/users/entities/jwt-expiry.entity';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private usersService: UsersService) {
+  constructor(
+    @InjectRepository(Users)
+    private readonly userRepository: Repository<Users>,
+    @InjectRepository(JWTExpiry)
+    private readonly jwtExpiryRepository: Repository<JWTExpiry>,
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -17,8 +25,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(req: Request, payload: any) {
     const currentToken = req.headers['authorization'].split(' ')[1];
     try {
-      const tokenDetails = await this.usersService.fetchJwt(currentToken);
-      const user = await this.usersService.findOne(tokenDetails.userName);
+      const tokenDetails = await this.jwtExpiryRepository.findOne({
+        where: {
+          jwtToken: currentToken,
+        },
+      });
+      const user = await this.userRepository.findOne({
+        where: {
+          userName: tokenDetails.userName,
+        },
+      });
 
       if (!tokenDetails.status) {
         return { message: 'Token has been revoked' };

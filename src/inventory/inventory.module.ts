@@ -4,50 +4,17 @@ import { Inventory } from 'src/inventory/entity/inventory.entity';
 import { ResponseHandlerService } from 'src/utilities/response-handler.service';
 import { InventoryController } from './inventory.controller';
 import { InventoryService } from './inventory.service';
-import { JwtStrategy } from 'src/auth/jwt.strategy';
-import { LocalStrategy } from 'src/auth/local.strategy';
-import { UsersService } from 'src/users/users.service';
-import { ConfigModule } from '@nestjs/config';
-import { envSchema } from 'src/utilities/joi-validation';
-import { JwtModule } from '@nestjs/jwt';
-import { TwilioModule } from 'nestjs-twilio';
-import { Users } from 'src/users/entities/user.entity';
 import { Verifications } from 'src/users/entities/verification.entity';
-import { JWTExpiry } from 'src/users/entities/jwt-expiry.entity';
 import { Cart } from './entity/cart.entity';
 import { CartItem } from './entity/cart-item.entity';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      Users,
-      Verifications,
-      Inventory,
-      JWTExpiry,
-      Cart,
-      CartItem,
-    ]),
-    ConfigModule.forRoot({
-      envFilePath: '.env.stage.dev',
-      validationSchema: envSchema,
-      isGlobal: true,
-    }),
-    JwtModule.register({
-      secret: process.env.SECRET,
-      signOptions: { expiresIn: '60s' },
-    }),
-    TwilioModule.forRoot({
-      accountSid: process.env.TWILIO_ACCOUNT_SID,
-      authToken: process.env.TWILIO_AUTH_TOKEN,
-    }),
+    AuthModule,
+    TypeOrmModule.forFeature([Verifications, Inventory, Cart, CartItem]),
   ],
-  providers: [
-    UsersService,
-    InventoryService,
-    ResponseHandlerService,
-    JwtStrategy,
-    LocalStrategy,
-  ],
+  providers: [InventoryService, ResponseHandlerService],
   controllers: [InventoryController],
 })
 export class InventoryModule {}

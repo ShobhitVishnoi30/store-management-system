@@ -1,12 +1,6 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { Transform } from 'class-transformer';
-import {
-  IsBoolean,
-  IsBooleanString,
-  IsEnum,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional } from 'class-validator';
 import { InventoryDto } from './create-inventory.dto';
 
 export enum SortingOptions {
@@ -31,5 +25,5 @@ export class FilterInventoryDto extends PartialType(InventoryDto) {
   @Transform(({ value }) => Boolean(value))
   @IsOptional()
   @IsBoolean()
-  orderBy: Boolean = false;
+  orderBy = false;
 }

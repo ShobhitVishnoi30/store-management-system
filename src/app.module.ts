@@ -5,7 +5,6 @@ import * as path from 'path';
 import { envSchema } from './utilities/joi-validation';
 import { InventoryModule } from './inventory/inventory.module';
 import { UsersModule } from './users/users.module';
-import { AuthModule } from './auth/auth.module';
 import { customInputValidation } from './middleware/customValidation';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -38,7 +37,6 @@ import { APP_GUARD } from '@nestjs/core';
     }),
     InventoryModule,
     UsersModule,
-    AuthModule,
   ],
   providers: [
     {

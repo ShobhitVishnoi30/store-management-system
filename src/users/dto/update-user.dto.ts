@@ -1,4 +1,4 @@
-import { PartialType, PickType, OmitType } from '@nestjs/mapped-types';
+import { PartialType } from '@nestjs/mapped-types';
 import { CreateUserDto } from './create-user.dto';
 import { IsEmpty } from 'class-validator';
 

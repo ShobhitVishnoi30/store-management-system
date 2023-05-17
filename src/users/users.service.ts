@@ -12,13 +12,14 @@ import { createTransport } from 'nodemailer';
 import { Verifications } from './entities/verification.entity';
 import * as sha256 from 'crypto-js/sha256';
 import { JWTExpiry } from './entities/jwt-expiry.entity';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { addDays, addMinutes } from 'date-fns';
+import { Cron } from '@nestjs/schedule';
+import { addMinutes } from 'date-fns';
+import { Cart } from 'src/inventory/entity/cart.entity';
 
 @Injectable()
 export class UsersService implements OnModuleInit {
   async onModuleInit() {
-    let adminDetails = {
+    const adminDetails = {
       userName: 'admin@login',
       password: process.env.ADMIN_PASSWORD,
       phoneNumber: '',
@@ -48,6 +49,8 @@ export class UsersService implements OnModuleInit {
     private readonly verificationRepository: Repository<Verifications>,
     @InjectRepository(JWTExpiry)
     private readonly jwtExpiryRepository: Repository<JWTExpiry>,
+    @InjectRepository(Cart)
+    private readonly cartRepository: Repository<Cart>,
     private readonly responseHandlerService: ResponseHandlerService,
     private jwtService: JwtService,
     private readonly twilioService: TwilioService,
@@ -249,6 +252,16 @@ export class UsersService implements OnModuleInit {
         .where('userName = :userId', { userId: userData.userName })
         .execute();
 
+      const cart = await this.cartRepository.findOne({
+        where: {
+          userId: user.id,
+        },
+      });
+
+      if (cart) {
+        await this.cartRepository.remove(cart);
+      }
+
       return await this.responseHandlerService.response(
         '',
         HttpStatus.OK,
@@ -275,7 +288,7 @@ export class UsersService implements OnModuleInit {
       );
     }
 
-    let jwtExpiryData = await this.jwtExpiryRepository.findOne({
+    const jwtExpiryData = await this.jwtExpiryRepository.findOne({
       where: {
         jwtToken: token,
       },
@@ -306,7 +319,7 @@ export class UsersService implements OnModuleInit {
         throw new Error('phone number does not exist');
       }
 
-      const otpResponse = await this.twilioService.client.verify.v2
+      await this.twilioService.client.verify.v2
         .services(process.env.TWILIO_SERVICE_SID)
         .verifications.create({
           to: user.phoneNumber,
@@ -440,7 +453,7 @@ export class UsersService implements OnModuleInit {
         throw new Error('Incorrect details');
       }
 
-      let todayDate = BigInt(Date.now().toString());
+      const todayDate = BigInt(Date.now().toString());
 
       if (BigInt(verifications.expirationTime) > todayDate) {
         throw new Error('verification hash has expired');
@@ -482,7 +495,7 @@ export class UsersService implements OnModuleInit {
         throw new Error('phone number does not exist');
       }
 
-      const otpResponse = await this.twilioService.client.verify.v2
+      await this.twilioService.client.verify.v2
         .services(process.env.TWILIO_SERVICE_SID)
         .verifications.create({
           to: user.phoneNumber,
