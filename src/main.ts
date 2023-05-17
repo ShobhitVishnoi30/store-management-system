@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import * as hpp from 'hpp';
 import helmet from 'helmet';
 import * as express from 'express';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -56,6 +57,17 @@ async function bootstrap() {
   //also use body parser here itself remove other custom middle ware
 
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
+
+  const config = new DocumentBuilder()
+    .addBearerAuth()
+    .addOAuth2()
+    .setTitle('Store Management')
+    .setDescription('Store Management System')
+    .setVersion('1.0')
+    .addTag('store')
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, document);
 
   await app.listen(port);
 }
