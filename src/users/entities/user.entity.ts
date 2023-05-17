@@ -16,10 +16,10 @@ export class Users {
   phoneNumber: string;
 
   @Column({ default: false })
-  verifiedEmail: Boolean;
+  verifiedEmail: boolean;
 
   @Column({ default: false })
-  verifiedPhoneNumber: Boolean;
+  verifiedPhoneNumber: boolean;
 
   @Column()
   role: Role;

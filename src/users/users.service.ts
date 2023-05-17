@@ -19,7 +19,7 @@ import { Cart } from 'src/inventory/entity/cart.entity';
 @Injectable()
 export class UsersService implements OnModuleInit {
   async onModuleInit() {
-    let adminDetails = {
+    const adminDetails = {
       userName: 'admin@login',
       password: process.env.ADMIN_PASSWORD,
       phoneNumber: '',
@@ -252,7 +252,7 @@ export class UsersService implements OnModuleInit {
         .where('userName = :userId', { userId: userData.userName })
         .execute();
 
-      let cart = await this.cartRepository.findOne({
+      const cart = await this.cartRepository.findOne({
         where: {
           userId: user.id,
         },
@@ -288,7 +288,7 @@ export class UsersService implements OnModuleInit {
       );
     }
 
-    let jwtExpiryData = await this.jwtExpiryRepository.findOne({
+    const jwtExpiryData = await this.jwtExpiryRepository.findOne({
       where: {
         jwtToken: token,
       },
@@ -319,7 +319,7 @@ export class UsersService implements OnModuleInit {
         throw new Error('phone number does not exist');
       }
 
-      const otpResponse = await this.twilioService.client.verify.v2
+      await this.twilioService.client.verify.v2
         .services(process.env.TWILIO_SERVICE_SID)
         .verifications.create({
           to: user.phoneNumber,
@@ -453,7 +453,7 @@ export class UsersService implements OnModuleInit {
         throw new Error('Incorrect details');
       }
 
-      let todayDate = BigInt(Date.now().toString());
+      const todayDate = BigInt(Date.now().toString());
 
       if (BigInt(verifications.expirationTime) > todayDate) {
         throw new Error('verification hash has expired');
@@ -495,7 +495,7 @@ export class UsersService implements OnModuleInit {
         throw new Error('phone number does not exist');
       }
 
-      const otpResponse = await this.twilioService.client.verify.v2
+      await this.twilioService.client.verify.v2
         .services(process.env.TWILIO_SERVICE_SID)
         .verifications.create({
           to: user.phoneNumber,

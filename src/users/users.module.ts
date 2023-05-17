@@ -24,7 +24,7 @@ import { Cart } from 'src/inventory/entity/cart.entity';
     }),
     JwtModule.register({
       secret: process.env.SECRET,
-      signOptions: { expiresIn: '600s' },
+      signOptions: { expiresIn: process.env.EXPIRES_IN },
     }),
     TwilioModule.forRoot({
       accountSid: process.env.TWILIO_ACCOUNT_SID,

@@ -7,5 +7,5 @@ export const envSchema = Joi.object({
   DB_USERNAME: Joi.string(),
   DB_PASSWORD: Joi.string(),
   DB_NAME: Joi.string(),
-  SALT_ROUNDS:Joi.number().required()
+  SALT_ROUNDS: Joi.number().required(),
 });

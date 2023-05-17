@@ -22,7 +22,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
       },
     });
     if (user) {
-      let correctPassword = await bcrypt.compare(password, user.password);
+      const correctPassword = await bcrypt.compare(password, user.password);
       if (correctPassword) {
         const { password, ...result } = user;
         return result;

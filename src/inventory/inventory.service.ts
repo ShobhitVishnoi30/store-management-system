@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InventoryDto } from 'src/inventory/dto/create-inventory.dto';
 import {
@@ -157,8 +157,8 @@ export class InventoryService {
   async filteredInventory(
     filterInventoryDto: FilterInventoryDto,
   ): Promise<ApiResponse> {
-    let where = {};
-    let ordersBy = {};
+    const where = {};
+    const ordersBy = {};
     let inventory: Inventory[];
 
     const {
@@ -227,7 +227,7 @@ export class InventoryService {
         cart.createdDate = Date.now().toString();
       }
 
-      let itemDetials = await this.inventoryRepository.findOne({
+      const itemDetials = await this.inventoryRepository.findOne({
         where: {
           id: cartItemDto.itemId,
         },
@@ -235,7 +235,7 @@ export class InventoryService {
 
       cart.userId = user.userId;
 
-      let cartItem = this.cartItemRepository.create();
+      const cartItem = this.cartItemRepository.create();
       cartItem.cart = cart;
       cartItem.itemId = cartItemDto.itemId;
       cartItem.quantity = cartItemDto.quantity;
@@ -257,7 +257,8 @@ export class InventoryService {
 
       cart.modifiedDate = Date.now().toString();
 
-      let totalCost = Number(cartItemDto.quantity) * Number(itemDetials.price);
+      const totalCost =
+        Number(cartItemDto.quantity) * Number(itemDetials.price);
       if (!cart.totalPrice) {
         cart.totalPrice = totalCost;
       } else {
@@ -283,7 +284,7 @@ export class InventoryService {
 
   async removeItemFromCart(user: any, updatedCartItem: UpdateCartItemDto) {
     try {
-      let cart = await this.cartRepository.findOne({
+      const cart = await this.cartRepository.findOne({
         where: {
           userId: user.userId,
         },
@@ -291,7 +292,7 @@ export class InventoryService {
       if (!cart) {
         throw new Error('No cart for this user');
       }
-      let itemDetails = await this.inventoryRepository.findOne({
+      const itemDetails = await this.inventoryRepository.findOne({
         where: {
           id: updatedCartItem.itemId,
         },
@@ -320,7 +321,7 @@ export class InventoryService {
 
       cart.modifiedDate = Date.now().toString();
 
-      let totalCost =
+      const totalCost =
         Number(updatedCartItem.quantity) * Number(itemDetails.price);
 
       cart.totalPrice = Number(cart.totalPrice) - totalCost;
@@ -349,7 +350,7 @@ export class InventoryService {
 
   async buyItems(user: any, id: string) {
     try {
-      let cart = await this.cartRepository.findOne({
+      const cart = await this.cartRepository.findOne({
         where: {
           id,
         },
@@ -382,7 +383,7 @@ export class InventoryService {
 
   async getCartItems(user: any, id: string) {
     try {
-      let cart = await this.cartRepository.findOne({
+      const cart = await this.cartRepository.findOne({
         where: {
           id,
         },
@@ -396,7 +397,7 @@ export class InventoryService {
         throw new Error('invalid cart');
       }
 
-      let response = {
+      const response = {
         totalPrice: cart.totalPrice,
         bought: cart.bought,
         modifiedDate: cart.modifiedDate,
