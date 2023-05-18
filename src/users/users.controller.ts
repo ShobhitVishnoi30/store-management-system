@@ -17,12 +17,30 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import {
+  ApiBearerAuth,
+  ApiConflictResponse,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post('signup')
+  @ApiOperation({
+    description: 'Api to register new users.',
+    summary:
+      'Api to register new users. It taked (email, password and phone number) as input',
+  })
+  @ApiCreatedResponse({
+    description: 'The user is successfully created',
+  })
+  @ApiConflictResponse({
+    description: 'In case of email already exists in the database',
+  })
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.createUser(createUserDto);
   }
@@ -30,6 +48,13 @@ export class UsersController {
   @UseGuards(LocalAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('login')
+  @ApiOperation({
+    description: 'Api to login user',
+  })
+  @ApiOkResponse({
+    description: 'log in user and returns a jwt token',
+  })
+  @ApiBearerAuth()
   signIn(@Req() req) {
     return this.usersService.login(req.user);
   }
